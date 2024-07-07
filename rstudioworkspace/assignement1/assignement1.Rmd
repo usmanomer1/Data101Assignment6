@@ -1,0 +1,189 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#question 1 
+##a)
+
+```{r}
+
+x = seq(2,6,2)
+rep(x,3)
+
+```
+
+##b)
+
+```{r}
+rep(x,each = 4)
+```
+
+##c)
+
+```{r}
+new1=c()
+for (i in 1:6){
+y = seq(i,i)
+new = rep(y,i)
+new1=c(new1,new)
+
+}
+
+print(new1)
+```
+
+##d)
+
+```{r}
+new2 = c()
+
+for (i in 1:3){
+  y = seq(i,i+3)
+  new2=c(new2,y)
+  
+}
+
+print(new2)
+
+
+
+```
+
+#Question 2
+##Answer)Some other speical values in R are inf or na or NAN
+
+#Question 3 
+##Answer)I would replace all the NA or NaN values with the mean of the dataset.This can be done by ignoring the NA to first calculate the mean then replacing the values with the mean and recalculating the mean.
+##Question 4
+##a)
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+print(chickwts)
+largest = max(chickwts$weight)
+print(largest)
+biggest = which(chickwts$weight == largest)
+print(biggest)
+```
+
+##b)
+
+```{r}
+descending = arrange(chickwts, desc(weight))
+print(chickwts[10,1])
+```
+
+##c)
+
+```{r}
+
+sum(chickwts$weight>300)
+```
+
+##d)
+
+```{r}
+print(factor(chickwts$feed))
+```
+
+##e)
+
+```{r}
+snflower = which(chickwts$feed=="sunflower")
+
+
+
+total = 0
+
+na.omit(chickwts)
+
+for (i in 1:length(snflower)){
+  snflower2 = numeric(length(snflower))
+  snflower2 = (snflower[i])
+  
+  
+  total= sum(total,chickwts[snflower2,1])
+  
+
+  
+  
+}
+print(total)
+
+
+lengthh=length(snflower)
+average = (total/lengthh)
+print(average)
+
+
+```
+
+##f)
+
+```{r}
+
+soybeans11 = which(chickwts$feed=="soybeans")
+
+percentagecalc = (length(soybeans11)/nrow(chickwts))
+print(percentagecalc)
+
+
+```
+
+#Question 5
+
+```{r}
+heightcm = function(x,y){
+  fttoinch = x*12
+  totalheightinch = sum(y,fttoinch)
+  yards = totalheightinch/36
+  return(yards)
+}
+print(heightcm(5,11))
+```
+
+#Question 6
+
+```{r}
+allIn = function(x,y){
+  if (length(x)>length(y)){
+    return(warning("X is longer than y"))
+    
+  }
+  else{
+    comparison = all(x%in%y)
+    return(comparison)
+  }
+  
+  
+}
+```
+
+#Question 7
+
+```{r}
+WHunif = function(n, x, y, z) {
+  u = numeric(n)
+  for (j in 1:n) {
+    xj = (171 * x) %% 30269
+    yj = (172 * y) %% 30307
+    zj = (170 * z) %% 30323
+    vj = xj / 30269 + yj / 30307 + zj / 30323
+    uj = vj - floor(vj)
+    u[j] = uj
+    x = xj
+    y = yj
+    z = zj
+  }
+  return(u)
+}
+
+
+
+example <- WHunif(20, 1, 2, 3)
+print(example)
+
+
+```

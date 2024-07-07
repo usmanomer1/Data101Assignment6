@@ -1,0 +1,154 @@
+---
+title: "assignment6"
+output: html_document
+date: "2023-12-03"
+---
+#Usman Omer 42834861 DATA 101 WITH IRENE VRBIK
+
+
+# Question 1.1
+# Correct answer: B
+# In k-nearest neighbors regression, the prediction for a new observation is the mean of the responses of the k nearest neighbors.
+
+# Question 1.2
+# Correct answer: A
+# RMSPE stands for root mean squared prediction error. It is a measure of the accuracy of a predictive model, calculated as the square root of the average squared differences between the predicted and actual values.
+
+# Question 1.3
+# Correct answer: C
+# The correct formula for RMSPE is the square root of the average of the squared differences between the predicted values and the actual values, expressed as: RMSPE = sqrt(sum((predicted - actual)^2) / n).
+
+# Question 2.1
+# Loading the bike sharing dataset
+```{r}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+install.packages("tidyverse")
+library(tidyverse)
+bike_df <- read_csv("bike.csv")
+```
+# This command reads the bike dataset from the specified directory.
+
+# Question 2.2
+# Counting observations and variables
+```{r}
+dim(bike_df)
+```
+# The `dim` function returns the dimensions of the dataframe, showing there are 17379 observations and 17 variables in the dataset.
+
+# Question 2.3
+# Creating a subset of the dataset
+```{r}
+my_df <- bike_df |> select(atemp, hum, windspeed, cnt)
+```
+# This command uses the `select` function from the tidyverse package to create a new dataframe `my_df` with only the specified variables.
+
+# Question 2.4
+# Creating a histogram
+```{r}
+my_df |>
+  ggplot() +
+  geom_histogram(aes(cnt), bins=10, fill="lightblue")
+```
+
+## This ggplot command creates a histogram for the 'cnt' variable with specified bins and fill color. The histogram helps in understanding the distribution of bike rentals.
+
+# Question 2.5
+# Creating a scatterplot
+```{r}
+my_df |>
+  ggplot() +
+  geom_point(aes(x=atemp, y=windspeed, col=cnt)) +
+  scale_colour_gradientn(colours = rev(hcl.colors(12)))
+```
+
+## This scatterplot shows the relationship between temperature (atemp), wind speed, and bike rentals (cnt), with color representing the count of rentals.
+
+# Question 2.6
+# Splitting the dataset into training and testing sets
+```{r}
+library(tidymodels)
+set.seed(124)
+bike_split <- initial_split(my_df, prop = 0.80, strata = cnt)
+bike_training <- training(bike_split)
+bike_testing <- testing(bike_split)
+```
+# The dataset is split into training and testing sets, with 80% of the data allocated to training. The `set.seed` function ensures reproducibility of the results.
+
+# Question 2.7
+# Creating a recipe for the model
+```{r}
+bike_recipe <- recipe(cnt ~ ., data = my_df) |>
+  step_scale(all_predictors()) |>
+  step_center(all_predictors())
+```
+# This recipe preprocesses the predictor variables by scaling and centering them, which is often necessary for KNN models to perform well.
+
+# Question 2.7 (continued)
+# Defining a KNN model specification
+```{r}
+knn_3 <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) |>
+  set_engine("kknn") |>
+  set_mode("regression")
+```
+# Here, a KNN regression model is specified with 3 neighbors. The 'kknn' engine is used for the KNN algorithm.
+
+# Question 2.8
+# Fitting the KNN model
+```{r}
+bike_fit_3 <- workflow() |>
+  add_recipe(bike_recipe) |>
+  add_model(knn_3) |>
+  fit(data = bike_training)
+```
+# This command creates and fits the KNN model to the training data using the defined recipe and model specification.
+
+# Question 2.9
+# Making predictions on test data
+```{r}
+pred_3 <- bike_fit_3 |>
+  predict(bike_testing) |>
+  bind_cols(bike_testing) |>
+  select(cnt, .pred)
+```
+# The model is used to make predictions on the test data. The `bind_cols` function combines the actual and predicted values for comparison.
+
+# question 2.10
+
+```{r}
+RMSE <- sqrt(mean((pred_3$cnt -pred_3$.pred)^2))
+RMSE
+```
+# In Question 2.10, I calculated the RMSE to see how well my model predicts actual data. RMSE gives the average difference between predictions and real values. I used the formula ```sqrt(mean((pred_3$cnt - pred_3$.pred)^2))``` for this. A lower RMSE means better predictions. In my case, the RMSE was 176.4141, which seemed high, so I thought my model might not be very accurate. This step was crucial to understand my model's performance.
+
+# question 2.11
+
+```{r}
+set.seed(3456) 
+
+k_vals <- tibble(neighbors = c(1,3, 10,25,100,200, 500)) #1 points
+bike_cv_spec <- nearest_neighbor(weight_func = "rectangular", 
+                                  neighbors = tune()) |>
+  set_engine("kknn") |>
+  set_mode("regression") # 2pints
+
+bike_vfold <- vfold_cv(bike_training, v = 5, strata = cnt) # 1 point
+
+bike_cv_wf <- workflow() |>
+  add_recipe(bike_recipe) |>
+  add_model(bike_cv_spec) # 1 points
+
+bike_cv_results <- bike_cv_wf |>
+  tune_grid(resamples = bike_vfold, grid = k_vals) |>
+  collect_metrics() |>
+  filter(.metric == "rmse") #4 points
+
+bike_cv_results
+```
+
+
+# For Question 2.11, I used 5-fold cross-validation to find the best k for my KNN model. I created a tibble with different k values and updated my model and workflow. After running the model, I used collect_metrics to get the RMSE for each k. The lowest RMSE was with k = 100, so I chose that. This process helped me pick the best k for my model, ensuring it's well-tuned and accurate.
+
+
+
+
+

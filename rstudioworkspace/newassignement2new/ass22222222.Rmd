@@ -1,0 +1,108 @@
+---
+title: "newassignement2newass"
+output: html_document
+date: "2023-10-02"
+---
+#questuion 1
+```{r echo=TRUE}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+
+
+install.packages("tidyverse")
+library(tidyverse)
+print(warpbreaks)
+
+```
+
+#a)
+```{r echo = TRUE}
+IsGood = function(x){
+avg = mean(x)
+if (avg>30)
+  return (TRUE)
+else
+  
+  return(FALSE)
+
+}
+newcol = sapply(warpbreaks[,1],IsGood)
+print(newcol)
+
+```
+#b)
+```{r echo= TRUE}
+isGood_breaks = warpbreaks%>%group_by(tension) %>%summarize(IsGoodresult=IsGood(breaks))
+print(isGood_breaks)
+```
+#c)
+```{r}
+
+write.csv(isGood_breaks,file="isgoodbreaks.csv")
+```
+
+#question2
+```{r echo=TRUE}
+
+
+install.packages("ggplot2")
+library(ggplot2)
+
+
+cylinders = filter(mpg,mpg$cyl>5)
+print(cylinders)
+```
+
+#b)
+```{r echo =TRUE}
+
+butClass= select(mpg,-class)
+print(butClass)
+```
+
+#c)
+```{r echo=TRUE}
+
+startC = select(mpg,starts_with("c"))
+```
+#d)
+```{r echo =TRUE}
+
+ascendingorder = arrange(mpg,cty)
+print(ascendingorder)
+
+```
+#e)
+```{r echo =TRUE}
+
+tiebreaker = mpg%>%arrange(desc(cty),desc(hwy))
+print(tiebreaker)
+```
+#f)
+
+```{r echo =TRUE}
+
+new_car_df = mpg%>%select(manufacturer,model,cty,hwy)
+
+```
+#g)
+```{r echo =TRUE}
+
+mpg = mpg%>%mutate(hwy =235.25/ hwy,cty = 235.25/cty)
+```
+#h)
+```{r echo =TRUE}
+
+
+manualbelowaverage = mpg%>%filter(trans %in% "manual"&cty<mean(cty))
+
+
+print(manualbelowaverage)
+```
+#i)
+```{r echo =TRUE}
+
+mpgsummary = mpg%>%group_by(manufacturer)%>%mutate(displacement = mean(displ), cylinders = mean(cyl), highway = mean(hwy*235.25) )
+
+print(mpgsummary)
+```
+

@@ -1,0 +1,248 @@
+---
+title: "Assignment4"
+output: html_document
+date: "2023-11-04"
+
+---
+
+Usman Omer- 42834861
+
+
+#question 1
+#answer= c
+
+```{r echo=TRUE}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+install.packages("tidyverse")
+library("tidyverse")
+
+data = read.csv("fruit_data.csv")
+fruit_data = data %>% mutate(fruit_name = as.factor(fruit_name))
+print(fruit_data)
+
+```
+#q2.2
+##answer = c
+
+```{r echo=TRUE}
+
+options(repr.plot.width=10, repr.plot.height=7)
+point1 <- c(192, 8.4)
+point2 <- c(180, 8)
+point44 <- c(194, 7.2)
+
+fruit_data |>  
+    ggplot(aes(x=mass, 
+               y= width, 
+               colour = fruit_name)) +
+        labs(x = "Mass (grams)",
+             y = "Width (cm)",
+            colour = 'Name of the Fruit') +
+        geom_point(size = 2.5) +
+        annotate("path", 
+                 x=point1[1] + 5*cos(seq(0,2*pi,length.out=100)),
+                 y=point1[2] + 0.1*sin(seq(0,2*pi,length.out=100))) +
+        annotate("text", x = 183, y =  8.5, label = "1", size = 8) + 
+        theme(text = element_text(size = 20))
+
+
+```
+#q2.3
+##answer = a
+#q2.3 and 2.4
+```{r echo=TRUE}
+
+
+point1 = c(192, 8.4) 
+point2 = c(180, 8)   
+fruit_dist_2 = sqrt((point2[1] - point1[1])^2 + (point2[2] - point1[2])^2)
+print(fruit_dist_2)
+
+
+point44 = c(194, 7.2) 
+fruit_dist_44 = sqrt((point44[1] - point1[1])^2 + (point44[2] - point1[2])^2)
+print(fruit_dist_44)
+```
+#q2.5
+#answer = c
+
+
+#q2.6
+```{r echo = TRUE}
+install.packages("tidymodels")
+
+library("tidymodels")
+
+
+set.seed(9999)
+
+
+fruit_data_recipe <- recipe(fruit_name ~ mass + width + height + color_score, data = fruit_data) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+```
+#q2.6.1
+```{r ECHO = TRUE}
+
+
+
+fruit_data_recipe <- prep(fruit_data_recipe, training = fruit_data)
+
+
+scaled_fruit_data <- bake(fruit_data_recipe, fruit_data)
+```
+#q2.7.1 and 2.7.2
+```{r echo = TRUE}
+
+
+
+fruit_data_recipe <- prep(fruit_data_recipe, training = fruit_data)
+
+
+scaled_fruit_data <- bake(fruit_data_recipe, fruit_data)
+```
+#q2.8 and 2.9
+```{r echo=TRUE}
+
+obs_1 <- scaled_fruit_data[1, c("mass", "width")]
+obs_2 <- scaled_fruit_data[2, c("mass", "width")]
+obs_44 <- scaled_fruit_data[44, c("mass", "width")]
+
+
+distance_2 <- sqrt(sum((obs_1 - obs_2)^2))
+distance_44 <- sqrt(sum((obs_1 - obs_44)^2))
+```
+
+```{r echo=TRUE}
+
+fruit_plot <- scaled_fruit_data %>%
+  ggplot(aes(x = mass, y = color_score)) +
+  geom_point(color = 'lightblue') +
+  facet_wrap(~fruit_name) +
+  labs(x = "Scaled Mass", y = "Scaled Color Score")
+
+# Scatterplot colored by fruit name
+fruit_plot2 <- scaled_fruit_data %>%
+  ggplot(aes(x = mass, y = color_score, color = fruit_name)) +
+  geom_point() +
+  labs(x = "Scaled Mass", y = "Scaled Color Score")
+print(fruit_plot2)
+```
+#q2.10
+##answer Looking at the scatterplot, you would find the three nearest observations from the new data point. These points seem to be:
+
+One purple point (mandarin) to the left of the new observation.
+One red point (apple) above the new observation.
+Another red or purple point either slightly to the left and below, or directly below the new observation.
+Without the actual coordinates of the existing points, we can't calculate the exact distances, but we can make an educated guess that the new observation is likely closest to two mandarins and one apple, given their proximity to the point (0.5, 0.5).
+
+Thus, based on a visual estimate and assuming that the closest points are indeed two mandarins and one apple, the new observation would be classified as a mandarin using KNN with k=3, since the majority class among the three closest neighbors would be mandarin.
+
+#q2.11 and 2.12
+```{r echo= TRUE}
+install.packages("kknn")
+library("kknn")
+
+my_knn <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) %>%
+  set_engine("kknn") %>%
+  set_mode("classification")
+
+
+fruit_data_recipe_2 <- recipe(fruit_name ~ mass + color_score, data = fruit_data) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+
+
+fruit_fit <- workflow() %>%
+  add_recipe(fruit_data_recipe_2) %>%
+  add_model(my_knn) %>%
+  fit(data = fruit_data)
+
+
+new_fruit <- tibble(mass = 150, color_score = 0.73)
+
+# Predict the class
+fruit_predicted <- predict(fruit_fit, new_fruit)
+```
+#q3.1
+```{r echo=TRUE}
+
+library(readr)
+
+seed_data <- read_table2(
+  "https://archive.ics.uci.edu/ml/machine-learning-databases/00236/seeds_dataset.txt",
+  col_names = FALSE
+)
+```
+#q3.2
+```{r echo=TRUE}
+mycol_names <- c("area", "perimeter", "compactness", "length", "width", "asymmetry_coefficient", "groove_length", "label")
+colnames(seed_data) <- mycol_names
+```
+#q3.3 and 3.4
+```{r}
+
+# Converting 'label' to factor and setting the levels and labels
+seed_data$label <- factor(seed_data$label, levels = c(1, 2, 3), labels = c("Kama", "Rosa", "Canadian"))
+
+
+
+label_counts <- table(seed_data$label)
+
+
+library(tidymodels)
+
+
+set.seed(9999)
+
+
+seed_recipe <- recipe(label ~ ., data = seed_data) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+
+
+seed_recipe <- prep(seed_recipe, training = seed_data)
+
+
+seed_knn <- nearest_neighbor(weight_func = "rectangular", neighbors = 4) %>%
+  set_engine("kknn") %>%
+  set_mode("classification")
+
+
+seed_workflow <- workflow() %>%
+  add_recipe(seed_recipe) %>%
+  add_model(seed_knn)
+
+
+seed_fit <- fit(seed_workflow, data = seed_data)
+
+
+new_seed <- tibble(area = 12.1,
+                   perimeter = 14.2,
+                   compactness = 0.9,
+                   length = 4.9,
+                   width = 2.8,
+                   asymmetry_coefficient = 3.0, 
+                   groove_length = 5.1)
+# Make a prediction
+seed_prediction <- predict(seed_fit, new_seed)
+
+# Extract the predicted class
+predicted_class <- seed_prediction$.pred_class
+
+# Ensure the predicted class is a character, assuming that `.pred_class` returns factor levels correctly
+# If the levels are still numeric indices, we convert them to character labels
+if(is.numeric(predicted_class)) {
+  predicted_class_name <- levels(seed_data$label)[predicted_class]
+} else {
+  predicted_class_name <- as.character(predicted_class)
+}
+
+# Print the predicted class name
+print(predicted_class_name)
+
+
+```
+
+
+

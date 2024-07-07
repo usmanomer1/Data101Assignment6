@@ -1,0 +1,14 @@
+---
+title: "lecture3practice"
+output: html_document
+date: "2023-09-18"
+---
+
+```{r}
+x <- Sys.Date()
+(x)
+date_num <- as.POSIXct(x)
+date_list <- as.POSIXlt(x)
+(unclass(date_num))
+```
+

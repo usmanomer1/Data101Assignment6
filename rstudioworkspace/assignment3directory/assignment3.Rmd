@@ -1,0 +1,89 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+#q1 
+```{r}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+install.packages("tidyverse")
+library(tidyverse)
+#q1 a)
+penguins = read_csv("penguins.csv")
+#q1 b)
+glimpse(penguins)
+#q1 c)
+numerCols = penguins%>%select(where(is.numeric))%>%summarize_all(list(
+    mean = ~mean(., na.rm = TRUE),
+    median = ~median(., na.rm = TRUE),
+    min = ~min(., na.rm = TRUE),
+    max = ~max(., na.rm = TRUE)
+  ))
+#q1 d)
+penguins= na.omit(penguins)
+#q1 e)
+penguins = penguins%>%mutate(size=if_else(body_mass_g > 4200,"big","small"))
+
+print(penguins)
+```
+#q2)
+```{r}
+
+library(ggplot2)
+
+g = ggplot(penguins, aes(x = size, y = bill_depth_mm)) +
+  geom_violin() +
+  labs(title = "Violin plot of penguins' bill depth by size", 
+       x = "Size", 
+       y = "Bill Depth (mm)") +
+  theme_minimal()
+g
+```
+#q3
+```{r}
+
+scatter = ggplot(penguins, aes(x=bill_length_mm,y=bill_depth_mm))+geom_point()+labs(title = "simple scatter plot to show the relationship between bill_length and bill_depth for different species.",x = "Bill length(mm)",y="Bill Depth(mm)")+theme_minimal()
+scatter+geom_smooth(method="lm")
+
+
+```
+#Q3 a)
+The best fit line shows an inverse relationship:when bill depth is greater bill length is less or vice verse
+
+#q4
+```{r}
+
+boxGraph=ggplot(penguins, aes(x = species, y = body_mass_g, fill = species)) + 
+  geom_boxplot() + 
+  facet_wrap(~island) + 
+  labs( 
+       x = "Species", 
+       y = "Body Mass (g)") + 
+  theme_minimal()
+boxGraph
+```
+#Q 4a)
+There are two outliers in the dream island for the chinstrap species
+```{r}
+#q4 b)
+boxGraph=boxGraph+labs(x = "island",y="bodymass")
+#q4 c)
+boxGraph=boxGraph+labs(title="Boxplot of bodymass by species within each island")
+#q4 d)
+boxGraph=boxGraph+theme_classic()
+boxGraph
+```
+#q5
+```{r}
+
+dream_penguins <- penguins %>% filter(island == "Dream")
+
+
+dreamPenPlot = ggplot(dream_penguins, aes(x = species, fill = species)) + 
+  geom_bar() + labs(title = "Number of Each Species in Dream Island", x = "Species", y = "Count") + 
+  theme_minimal() +
+  theme(legend.title = element_blank())
+dreamPenPlot
+```
+        

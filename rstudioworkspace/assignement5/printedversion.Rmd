@@ -1,0 +1,281 @@
+---
+title: "assignemtn5_42834861"
+output: html_document
+date: "2023-11-18"
+---
+*Usman Omer 
+42834861
+DATA 101 IRENE VIRBIK
+ASSIGNEMENT 5*
+
+#   1)
+Parameter tuning in machine learning involves adjusting the hyperparameters of a model to optimize its performance, with hyperparameters being the external configurations of the model. In the context of the KNN algorithm, this translates to finding the optimal number of nearest neighbors (k) to use for predictions. This process is often carried out using n-fold cross-validation, where the data is divided into 'n' parts, and the model is trained and validated on these parts in a rotational manner. The aim is to identify the value of 'k' that provides the best performance as measured by metrics like accuracy and recall. While parameter tuning is a critical step in developing the model, it is distinct from testing the model, which involves evaluating the model's performance on an entirely separate dataset to ensure its generalization ability.
+
+#. 2)
+```{r, echo =TRUE}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+library(tidymodels)
+install.packages("discrim")
+library(discrim)
+mobile_carrier_df <- 
+  readRDS(url('https://gmubusinessanalytics.netlify.app/data/mobile_carrier_data.rds'))
+
+print(mobile_carrier_df)
+
+```
+# 2.1
+no there is no need to convert the data type of the response variable.
+
+# 2.2
+```{r, echo =TRUE}
+library(ggplot2)
+
+
+drawPlot = ggplot(mobile_carrier_df, aes(x=canceled_plan, fill=canceled_plan)) + 
+  geom_bar(color='light blue', fill='light blue') +
+  labs(x='Canceled Plan', y='Count of Records') +
+  theme_classic()
+
+print(drawPlot)
+```
+
+# 2.3 Based on the graph, do you think this dataset is balanced? Explain your reseaoning briefly [1]
+Ans:No this dataset is not balanced because there is stark differnce between the frequency of both observations.There is a very high frequency of no and low frequency of yes.
+
+# 2.4
+
+```{r, echo =TRUE}
+print(any(is.na(mobile_carrier_df)))
+```
+
+no there is no mssing value as demonstrated above by checking the whole dataframe/dataset.
+
+
+# 2.5
+
+```{r, echo =TRUE}
+
+library(tidymodels)
+
+set.seed(271)
+
+
+split <- initial_split(mobile_carrier_df, prop = 0.8, strata = canceled_plan)
+
+
+mobile_training <- training(split)
+
+mobile_testing <- testing(split)
+
+```
+
+# 2.6
+```{r, echo =TRUE}
+
+library(tidymodels)
+
+
+my_formula <- formula(canceled_plan ~ number_vmail_messages + total_day_minutes + 
+                      total_day_calls + total_eve_minutes + total_eve_calls + 
+                      total_night_minutes + total_night_calls + total_intl_minutes + 
+                      total_intl_calls + number_customer_service_calls)
+
+
+my_recipe <- recipe(my_formula, data = mobile_training) %>%
+  step_scale(all_numeric_predictors()) %>%
+  step_center(all_numeric_predictors())
+
+
+my_recipe <- prep(my_recipe, training = mobile_training)
+
+
+summary(my_recipe)
+```
+
+# 2.7
+```{r, echo =TRUE}
+
+library(tidymodels)
+
+
+set.seed(271)
+
+
+mobile_folds <- vfold_cv(mobile_training, v = 6)
+
+```
+
+# 2.8
+
+```{r, echo =TRUE}
+
+library(tidymodels)
+
+
+knn_spec <- nearest_neighbor(neighbors = tune()) %>%
+            set_engine("kknn") %>%
+            set_mode("classification") 
+
+            
+```
+
+
+# 2.9
+
+```{r, echo =TRUE}
+library(tidymodels)
+
+
+my_workflow <- workflow() %>%
+               add_model(knn_spec) %>%
+               add_recipe(my_recipe)
+```
+
+# 2.10
+
+```{r, echo =TRUE}
+k_vals <- tibble(neighbors = c(10, 15, 25, 45, 60, 80, 100))
+
+```
+
+#2.11
+```{r, echo =TRUE}
+
+
+tuning_results <- workflow() %>%
+               add_model(knn_spec) %>%
+               add_recipe(my_recipe)%>%
+               tune_grid(resamples = mobile_folds, grid = k_vals)
+
+```
+
+# 2.12
+```{r, echo =TRUE}
+
+library(tune)
+
+
+accuracy_results <- collect_metrics(tuning_results)
+
+
+accuracy_table <- accuracy_results %>%
+                  filter(.metric == "accuracy")
+
+
+accuracy_table
+```
+
+# 2.13
+
+```{r, echo =TRUE}
+
+
+library(ggplot2)
+
+drawPlot2 <- ggplot(accuracy_table, aes(x=neighbors, y=mean)) +
+  geom_point(stat="identity", color="light blue", fill="light blue") +
+  labs(x="neighbors", y="accuracy") +
+  theme_classic()
+
+print(drawPlot2)
+
+```
+
+Ans:I will use 25 as my hyper parameter as we can see in the above plot that it is the local/global maximum of the chart meaning its the highest possible accuracy achievable after and before which there is less accuracy.
+
+
+# 2.14
+
+```{r, echo =TRUE}
+
+library(tidymodels)
+
+
+set.seed(176)
+
+
+knn25_spec <- nearest_neighbor(neighbors = 25) %>%
+              set_engine("kknn") %>%
+              set_mode("classification")
+
+knn25_workflow <- workflow() %>%
+                  add_model(knn25_spec) %>%
+                  add_recipe(my_recipe)
+
+
+knn25_fit <- fit(knn25_workflow, data = mobile_training)
+```
+
+# 2.15
+
+```{r, echo =TRUE}
+
+predictions <- predict(knn25_fit, new_data = mobile_testing)
+results <- mobile_testing %>%
+           select(canceled_plan) %>%
+           bind_cols(predictions)
+
+
+results
+```
+
+# 2.16
+
+```{r, echo =TRUE}
+
+install.packages("caret")
+library(caret)
+
+confusion_matrix <- confusionMatrix(results$.pred_class, results$canceled_plan)
+
+confusion_matrix
+```
+
+# 2.17
+
+note that recall and sensitivity is the same thing
+
+```{r, echo =TRUE}
+
+precision <- confusion_matrix$byClass["Precision"]
+
+
+recall <- confusion_matrix$byClass["Sensitivity"]
+
+
+precision
+recall
+```
+## 3
+# **Advantages:**
+
+Easy to Understand and Implement: KNN is straightforward to understand and implement. It's a non-parametric algorithm, which means it doesn't make assumptions about the underlying data distribution.
+
+No Training Phase: KNN doesn't require a lengthy training phase. It simply stores the training data, making it suitable for both online and offline learning scenarios.
+
+Adapts to Data: KNN can handle data with complex decision boundaries and varying densities. It adapts well to different data distributions.
+
+Suitable for Multiclass Problems: KNN can handle multiclass classification problems effectively. It assigns a class based on the majority vote of the K nearest neighbors.
+
+Doesn't Make Strong Assumptions: KNN doesn't assume that the data is linearly separable, making it suitable for both linear and non-linear classification tasks.
+
+# **Disadvantages:**
+
+Computationally Intensive: Calculating distances between the test point and all training data points can be computationally intensive, especially with large datasets. This makes KNN slow during prediction.
+
+Sensitivity to Noise and Outliers: KNN is sensitive to noisy data and outliers. A single outlier can significantly affect the classification result.
+
+Curse of Dimensionality: KNN's performance can degrade as the number of features (dimensions) increases. In high-dimensional spaces, data points tend to become equidistant, reducing the effectiveness of KNN.
+
+Needs Proper Distance Metric: The choice of distance metric (e.g., Euclidean, Manhattan, etc.) can impact KNN's performance. Selecting an inappropriate metric can lead to suboptimal results.
+
+Optimal K Value Selection: Choosing the right value of K is crucial. A small K can make the model sensitive to noise, while a large K can smooth decision boundaries, potentially missing important patterns.
+
+Imbalanced Data: KNN can be biased towards the majority class in imbalanced datasets. It may not perform well when the classes have significantly different sizes.
+
+Lack of Interpretability: KNN provides little insight into why a particular classification decision was made. It lacks model interpretability compared to other algorithms like decision trees.
+
+## 4
+**Overfitting** in machine learning means the model is too complex and fits the training data too closely, leading to poor performance on new data.
+
+**Underfitting** means the model is too simple and fails to capture important patterns in the training data, resulting in poor performance on both training and new data

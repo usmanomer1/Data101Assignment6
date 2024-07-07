@@ -1,0 +1,67 @@
+---
+title: "assignemnent2newest"
+output:
+  html_document: default
+  pdf_document: default
+date: "2023-10-02"
+---
+```{r setup, include=FALSE, echo = TRUE}
+chooseCRANmirror()
+install.packages("tidyverse")
+library(tidyverse)
+print(warpbreaks)
+
+IsGood = function(x){
+avg = mean(x)
+if (avg>30)
+  return (TRUE)
+else
+  
+  return(FALSE)
+
+}
+newcol = sapply(warpbreaks[,1],IsGood)
+print(newcol)
+
+isGood_breaks = warpbreaks%>%group_by(tension) %>%summarize(IsGoodresult=IsGood(breaks))
+print(isGood_breaks)
+
+write.csv(isGood_breaks,file="isgoodbreaks.csv")
+
+
+
+
+install.packages("ggplot2")
+library(ggplot2)
+?mpg
+
+cylinders = filter(mpg,mpg$cyl>5)
+print(cylinders)
+
+butClass= select(mpg,-class)
+print(butClass)
+
+startC = select(mpg,starts_with("c"))
+ascendingorder = arrange(mpg,cty)
+print(ascendingorder)
+
+descendingorder = mpg%>%arrange(desc(cty))
+print(descendingorder)
+
+tiebreaker = mpg%>%arrange(desc(cty),desc(hwy))
+print(tiebreaker)
+
+
+new_car_df = mpg%>%select(manufacturer,model,cty,hwy)
+
+mpg = mpg%>%mutate(hwy =235.5/ hwy,cty = 235.5/cty)
+
+
+manualbelowaverage = mpg%>%filter(trans %in% "manual"&cty<mean(cty))
+
+
+print(manualbelowaverage)
+
+mpgsummary = mpg%>%group_by(manufacturer)%>%summarize(mean = mean(displ), cylinders = cyl, highway = hwy )
+mutate(mpg,mpgsummary)
+```
